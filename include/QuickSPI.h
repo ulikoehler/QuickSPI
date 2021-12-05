@@ -13,7 +13,7 @@
 #define QUICKSPI_DEFINE_REGISTER8_RW(name, raddr, waddr)\
 static constexpr uint8_t name##ReadAddress = (raddr);\
 static constexpr uint8_t name##WriteAddress = (waddr);\
-inline uint8_t read##name(uint8_t* out) {return read8BitRegister((raddr));}\
+inline uint8_t read##name() {return read8BitRegister((raddr));}\
 inline void write##name(uint8_t val) {return write8BitRegister((raddr), val);}\
 inline bool writeAndVerify##name(uint8_t val) {return writeAndVerify8BitRegister((raddr), (waddr), val);}
 #define QUICKSPI_DEFINE_REGISTER16_RW(name, raddr, waddr)\
@@ -31,23 +31,23 @@ inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify24BitRegist
 #define QUICKSPI_DEFINE_REGISTER32_RW(name, raddr, waddr)\
 static constexpr uint8_t name##ReadAddress = (raddr);\
 static constexpr uint8_t name##WriteAddress = (waddr);\
-inline void read##name(uint32_t* out) {return read32BitRegister((raddr));}\
+inline void read##name() {return read32BitRegister((raddr));}\
 inline void write##name(uint32_t val) {return write32BitRegister((waddr), val);}\
 inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify32BitRegister((raddr), (waddr), val);}
 
 // Read-only register definitions
 #define QUICKSPI_DEFINE_REGISTER8_RO(name, addr)\
 static constexpr uint8_t name = addr;\
-inline void read##name(uint8_t* out) {return read8BitRegister((addr));}
+inline uint8_t read##name() {return read8BitRegister((addr));}
 #define QUICKSPI_DEFINE_REGISTER16_RO(name, addr)\
 static constexpr uint8_t name = addr;\
-inline void read##name(uint16_t* out) {return read16BitRegister((addr));}
+inline uint16_t read##name() {return read16BitRegister((addr));}
 #define QUICKSPI_DEFINE_REGISTER24_RO(name, addr)\
 static constexpr uint8_t name = addr;\
-inline void read##name(uint32_t* out) {return read24BitRegister((addr));}
+inline uint32_t read##name() {return read24BitRegister((addr));}
 #define QUICKSPI_DEFINE_REGISTER32_RO(name, addr)\
 static constexpr uint8_t name = addr;\
-inline void read##name(uint32_t* out) {return read32BitRegister((addr));}
+inline uint32_t read##name() {return read32BitRegister((addr));}
 
 /**
  * Represents a single device on the SPI bus.
