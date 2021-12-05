@@ -1,0 +1,27 @@
+{
+    "name": "QuickSPI",
+    "version": "1.0",
+    "description": "Practical Arduino Wire SPI wrapper, allowing direct register access with proper error handling.",
+    "keywords": "SPI, Wire, Arduino",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/ulikoehler/QuickSPI.git"
+    },
+    "authors":
+    [
+      {
+        "name": "Uli Köhler",
+        "email": "github@techoverflow.net",
+        "url": "https://techoverflow.net",
+        "maintainer": true
+      }
+    ],
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/ulikoehler/QuickSPI",
+    "dependencies": {
+      "SPI": "*"
+    },
+    "frameworks": "arduino",
+    "platforms": "*"
+}
