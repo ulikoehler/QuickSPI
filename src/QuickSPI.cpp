@@ -1,123 +1,132 @@
-#include "QuickI2C.h"
+#include "QuickSPI.h"
+#include <string.h> // memcpy
 
-const char* QuickI2CStatusToString(QuickI2CStatus status) {
-    if(status == QuickI2CStatus::OK) {
-        return "OK";
-    } else if(status == QuickI2CStatus::SlaveNotResponding) {
-        return "Slave not Responding";
-    } else if(status == QuickI2CStatus::DataTimeout) {
-        return "Data timeout";
-    } else if(status == QuickI2CStatus::VerifyMismatch) {
-        return "Verify mismatch";
-    } else {
-        return "Unknown";
-    }
+QuickSPIDevice::QuickSPIDevice(SPIClass& spi, uint8_t ssPin, SPISettings spiSettings): spi(spi), ssPin(ssPin), spiSettings(spiSettings) {}
+
+void QuickSPIDevice::writeData(uint8_t registerAddress, const uint8_t* buf, size_t len) {
+    // Transmit & receive buffer.
+    // Length + 1 since we need to 
+    // NOTE: Received data will
+    uint8_t* trxbuf = new uint8_t[len + 1];
+    txbuf[0] = registerAddress;
+    // Copy source data
+    memcpy(trxbuf + 1, buf, len);
+    // SPI transaction
+    spi->beginTransaction(spiSettings);
+    digitalWrite(ssPin, LOW);
+    spi->transfer(trxbuf, len + 1);
+    digitalWrite(ssPin, HIGH);
+    spi->endTransaction();
+    // Cleanup. Discards received data
+    delete[] trxbuf;
 }
 
-QuickI2CDevice::QuickI2CDevice(uint16_t address, TwoWire& wire, uint32_t i2cClockSpeed) : wire(wire), address(address), i2cClockSpeed(i2cClockSpeed) {
+void QuickSPIDevice::writeAndReceiveData(uint8_t registerAddress, uint8_t* buf, size_t len) {
+    // Transmit & receive buffer.
+    // Length + 1 since we need to 
+    // NOTE: Received data will
+    uint8_t* trxbuf = new uint8_t[len + 1];
+    txbuf[0] = registerAddress;
+    // Copy source data
+    memcpy(trxbuf + 1, buf, len);
+    // SPI transaction
+    spi->beginTransaction(spiSettings);
+    digitalWrite(ssPin, LOW);
+    spi->transfer(trxbuf, len + 1);
+    digitalWrite(ssPin, HIGH);
+    spi->endTransaction();
+    // Copy received data
+    memcpy(buf, trxbuf + 1, len);
+    // Cleanup.
+    delete[] trxbuf;
 }
 
-QuickI2CStatus QuickI2CDevice::writeData(uint8_t registerAddress, const uint8_t* buf, size_t len) {
-    // Configure clock speed & timeout
-    wire.setClock(this->i2cClockSpeed);
-    // Don't need timeout for write since we will never read
-    // Transmit address
-    wire.beginTransmission(this->address);
-    wire.write(registerAddress);
-    wire.write(buf, len);
-    wire.endTransmission();
-    // Check for missing
-    if(wire.lastError() == I2C_ERROR_ACK) {
-        return QuickI2CStatus::SlaveNotResponding;
-    }
-    return QuickI2CStatus::OK;
+uint8_t void QuickSPIDevice::readData(uint8_t registerAddress, uint8_t* buf, size_t len) {
+    // Transmit & receive buffer.
+    // Length + 1 since we need to 
+    // NOTE: Received data will
+    uint8_t* trxbuf = new uint8_t[len + 1];
+    txbuf[0] = registerAddress;
+    // SPI transaction
+    spi->beginTransaction(spiSettings);
+    digitalWrite(ssPin, LOW);
+    spi->transfer(trxbuf, len + 1);
+    digitalWrite(ssPin, HIGH);
+    spi->endTransaction();
+    // Copy to destination buffer
+    memcpy(buf, trxbuf + 1, len);
+    // Cleanup
+    delete[] trxbuf;
 }
 
-QuickI2CStatus QuickI2CDevice::readData(uint8_t registerAddress, uint8_t* buf, size_t len) {
-    // Configure clock speed & timeout
-    wire.setClock(this->i2cClockSpeed);
-    wire.setTimeout(this->computeTimeout(len));
-    // Transmit address
-    wire.beginTransmission(this->address);
-    wire.write(registerAddress);
-    wire.endTransmission();
-    // Check for missing
-    if(wire.lastError() == I2C_ERROR_ACK) {
-        return QuickI2CStatus::SlaveNotResponding;
-    }
-    // Receive data
-    wire.requestFrom(this->address, len);
-    size_t actuallyRead = wire.readBytes(buf, len);
-    if(actuallyRead < len) {
-        // Did not read enough bytes
-        this->dataBytesReadUntilTimeout = actuallyRead;
-        return QuickI2CStatus::DataTimeout;
-    }
-    return QuickI2CStatus::OK;
-}
-
-QuickI2CStatus QuickI2CDevice::writeAndVerifyData(uint8_t registerAddress, const uint8_t* buf, size_t len, uint8_t* rxbuf) {
+bool QuickSPIDevice::writeAndVerifyData(uint8_t registerAddress, const uint8_t* buf, size_t len) {
     // Try to write - if it fails, do not try to verify
-    QuickI2CStatus rc = writeData(registerAddress, buf, len);
-    if(rc != QuickI2CStatus::OK) {
-        return rc;
-    }
+    writeData(registerAddress, buf, len);
     // Insert grace time between write and read
     delay(delayBetweenWriteAndRead);
     // Read back data for verify
-    rc = readData(registerAddress, rxbuf, len);
-    if(rc != QuickI2CStatus::OK) {
-        return rc;
-    }
+    uint8_t* rxbuf = new uint8_t[len];
+    readData(registerAddress, rxbuf, len);
     // Compare data
-    if(memcmp(rxbuf, buf, len) != 0) {
-        // rxbuf is not the same as buf
-        return QuickI2CStatus::VerifyMismatch;
-    }
-    return QuickI2CStatus::OK;
+    bool result = memcmp(rxbuf, buf, len) == 0; // true => rx data is the same as tx data
+    // cleanup
+    delete[] rxbuf;
+    return result;
 }
 
-QuickI2CStatus QuickI2CDevice::read8BitRegister(uint8_t registerAddress, uint8_t* buf) {
-    return readData(registerAddress, buf, 1);
+void QuickSPIDevice::read8BitRegister(uint8_t registerAddress) {
+    return readData(registerAddress, (uint8_t*)buf, 1);
 }
 
-QuickI2CStatus QuickI2CDevice::read16BitRegister(uint8_t registerAddress, uint16_t* buf) {
+void QuickSPIDevice::read16BitRegister(uint8_t registerAddress) {
     return readData(registerAddress, (uint8_t*)buf, 2);
 }
 
-QuickI2CStatus QuickI2CDevice::read32BitRegister(uint8_t registerAddress, uint32_t* buf) {
+void QuickSPIDevice::read24BitRegister(uint8_t registerAddress) {
+    return readData(registerAddress, (uint8_t*)buf, 3);
+}
+
+void QuickSPIDevice::read32BitRegister(uint8_t registerAddress, uint32_t* buf) {
     return readData(registerAddress, (uint8_t*)buf, 4);
 }
 
-QuickI2CStatus QuickI2CDevice::write8BitRegister(uint8_t registerAddress, uint8_t value) {
+void QuickSPIDevice::write8BitRegister(uint8_t registerAddress, uint8_t value) {
     return writeData(registerAddress, &value, 1);
 }
 
-QuickI2CStatus QuickI2CDevice::write16BitRegister(uint8_t registerAddress, uint16_t value) {
+void QuickSPIDevice::write16BitRegister(uint8_t registerAddress, uint16_t value) {
     return writeData(registerAddress, (uint8_t*)&value, 2);
 }
 
-QuickI2CStatus QuickI2CDevice::write32BitRegister(uint8_t registerAddress, uint32_t value) {
+void QuickSPIDevice::write24BitRegister(uint8_t registerAddress, uint16_t value) {
+    return writeData(registerAddress, (uint8_t*)&value, 3);
+}
+
+void QuickSPIDevice::write32BitRegister(uint8_t registerAddress, uint32_t value) {
     return writeData(registerAddress, (uint8_t*)&value, 4);
 }
 
-QuickI2CStatus QuickI2CDevice::writeAndVerify8BitRegister(uint8_t registerAddress, uint8_t value, uint8_t* rxbuf) {
+void QuickSPIDevice::writeAndVerify8BitRegister(uint8_t registerAddress, uint8_t value, uint8_t* rxbuf) {
     return writeAndVerifyData(registerAddress, &value, 1, rxbuf);
 }
 
-QuickI2CStatus QuickI2CDevice::writeAndVerify16BitRegister(uint8_t registerAddress, uint16_t value, uint8_t* rxbuf) {
+void QuickSPIDevice::writeAndVerify16BitRegister(uint8_t registerAddress, uint16_t value, uint8_t* rxbuf) {
     return writeAndVerifyData(registerAddress, (uint8_t*)&value, 2, rxbuf);
 }
 
-QuickI2CStatus QuickI2CDevice::writeAndVerify32BitRegister(uint8_t registerAddress, uint32_t value, uint8_t* rxbuf) {
+void QuickSPIDevice::writeAndVerify24BitRegister(uint8_t registerAddress, uint32_t value, uint8_t* rxbuf) {
+    return writeAndVerifyData(registerAddress, (uint8_t*)&value, 3, rxbuf);
+}
+
+void QuickSPIDevice::writeAndVerify32BitRegister(uint8_t registerAddress, uint32_t value, uint8_t* rxbuf) {
     return writeAndVerifyData(registerAddress, (uint8_t*)&value, 4, rxbuf);
 }
 
 
-uint32_t QuickI2CDevice::computeTimeout(uint32_t bytesToTransfer) {
+uint32_t QuickSPIDevice::computeTimeout(uint32_t bytesToTransfer) {
     uint32_t numBits = bytesToTransfer * 9; // 8 data bits + 1 ACK/NACK bit per byte
     // NOTE: We avoid to use floating point arithmetic here.
-    uint32_t durationMilliseconds = numBits * 1000 / this->i2cClockSpeed; // This will ALWAYS be rounded down!
+    uint32_t durationMilliseconds = numBits * 1000 / this->SPIClockSpeed; // This will ALWAYS be rounded down!
     // Give an extra millisecond so we have ensured to always round up
     return durationMilliseconds + 2;
 }
