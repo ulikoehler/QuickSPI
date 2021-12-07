@@ -129,3 +129,4 @@ bool QuickSPIDevice::writeAndVerify24BitRegister(uint8_t readAddress, uint8_t wr
 bool QuickSPIDevice::writeAndVerify32BitRegister(uint8_t readAddress, uint8_t writeAddress, uint32_t value) {
     return writeAndVerifyData(readAddress, writeAddress, (uint8_t*)&value, 4);
 }
+                               
