@@ -31,7 +31,7 @@ inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify24BitRegist
 #define QUICKSPI_DEFINE_REGISTER32_RW(name, raddr, waddr)\
 static constexpr uint8_t name##ReadAddress = (raddr);\
 static constexpr uint8_t name##WriteAddress = (waddr);\
-inline void read##name() {return read32BitRegister((raddr));}\
+inline uint32_t read##name() {return read32BitRegister((raddr));}\
 inline void write##name(uint32_t val) {return write32BitRegister((waddr), val);}\
 inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify32BitRegister((raddr), (waddr), val);}
 
