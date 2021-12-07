@@ -75,25 +75,25 @@ bool QuickSPIDevice::writeAndVerifyData(uint8_t readAddress, uint8_t writeAddres
 }
 
 uint8_t QuickSPIDevice::read8BitRegister(uint8_t registerAddress) {
-    uint8_t ret;
+    uint8_t ret = 0;
     readData(registerAddress, (uint8_t*)&ret, 1);
     return ret;
 }
 
 uint16_t QuickSPIDevice::read16BitRegister(uint8_t registerAddress) {
-    uint16_t ret;
+    uint16_t ret = 0;
     readData(registerAddress, (uint8_t*)&ret, 2);
     return ret;
 }
 
 uint32_t QuickSPIDevice::read24BitRegister(uint8_t registerAddress) {
-    uint32_t ret;
+    uint32_t ret = 0;
     readData(registerAddress, (uint8_t*)&ret, 3);
     return ret;
 }
 
 uint32_t QuickSPIDevice::read32BitRegister(uint8_t registerAddress) {
-    uint32_t ret;
+    uint32_t ret = 0;
     readData(registerAddress, (uint8_t*)&ret, 4);
     return ret;
 }
