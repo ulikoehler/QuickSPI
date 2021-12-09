@@ -14,7 +14,7 @@
 static constexpr uint8_t name##ReadAddress = (raddr);\
 static constexpr uint8_t name##WriteAddress = (waddr);\
 inline uint8_t read##name() {return read8BitRegister((raddr));}\
-inline void write##name(uint8_t val) {return write8BitRegister((raddr), val);}\
+inline void write##name(uint8_t val) {return write8BitRegister((waddr), val);}\
 inline bool writeAndVerify##name(uint8_t val) {return writeAndVerify8BitRegister((raddr), (waddr), val);}
 #define QUICKSPI_DEFINE_REGISTER16_RW(name, raddr, waddr)\
 static constexpr uint8_t name##ReadAddress = (raddr);\
