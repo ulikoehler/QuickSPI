@@ -11,6 +11,14 @@ void QuickSPIDevice::writeData(uint8_t registerAddress, const uint8_t* buf, size
     trxbuf[0] = registerAddress;
     // Copy source data
     memcpy(trxbuf + 1, buf, len);
+    // Debug?
+    #ifdef QUICKSPI_DEBUG_WRITES
+    Serial.printf("QuickSPI write of size 1+%d\r\n", len);
+    for (size_t i = 0; i < len+1; i++)
+    {
+        Serial.printf(" -- IO byte %d: %02x\r\n", i, trxbuf[i]);
+    }
+    #endif
     // SPI transaction
     spi.beginTransaction(spiSettings);
     digitalWrite(ssPin, LOW);
@@ -29,6 +37,13 @@ void QuickSPIDevice::writeAndReceiveData(uint8_t registerAddress, uint8_t* buf, 
     trxbuf[0] = registerAddress;
     // Copy source data
     memcpy(trxbuf + 1, buf, len);
+    #if defined(QUICKSPI_DEBUG_WRITES) || defined(QUICKSPI_DEBUG_READS)
+    Serial.printf("QuickSPI read/write of size 1+%d\r\n", len);
+    for (size_t i = 0; i < len+1; i++)
+    {
+        Serial.printf(" -- Write byte %d: %02x\r\n", i, trxbuf[i]);
+    }
+    #endif
     // SPI transaction
     spi.beginTransaction(spiSettings);
     digitalWrite(ssPin, LOW);
@@ -37,6 +52,13 @@ void QuickSPIDevice::writeAndReceiveData(uint8_t registerAddress, uint8_t* buf, 
     spi.endTransaction();
     // Copy received data
     memcpy(buf, trxbuf + 1, len);
+
+    #if defined(QUICKSPI_DEBUG_WRITES) || defined(QUICKSPI_DEBUG_READS)
+    for (size_t i = 0; i < len+1; i++)
+    {
+        Serial.printf(" -- RX byte %d: %02x\r\n", i, trxbuf[i]);
+    }
+    #endif
     // Cleanup.
     delete[] trxbuf;
 }
@@ -53,6 +75,14 @@ void QuickSPIDevice::readData(uint8_t registerAddress, uint8_t* buf, size_t len)
     spi.transfer(trxbuf, len + 1);
     digitalWrite(ssPin, HIGH);
     spi.endTransaction();
+
+    #ifdef QUICKSPI_DEBUG_READS
+    Serial.printf("QuickSPI read of size 1+%d\r\n", len);
+    for (size_t i = 0; i < len+1; i++)
+    {
+        Serial.printf(" -- RX byte %d: %02x\r\n", i, trxbuf[i]);
+    }
+    #endif
     // Copy to destination buffer
     memcpy(buf, trxbuf + 1, len);
     // Cleanup
