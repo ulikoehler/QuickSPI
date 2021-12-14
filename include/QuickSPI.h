@@ -95,6 +95,21 @@ constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>:
 
 }
 
+// Pre/postprocess functions that do nothing
+inline uint8_t noop(uint8_t address, uint8_t rawValue) {return rawValue;}
+inline uint16_t noop(uint8_t address, uint16_t rawValue) {return rawValue;}
+inline uint32_t noop(uint8_t address, uint32_t rawValue) {return rawValue;}
+
+// Pre/postprocess functions that swap the byte order (but do not change the bit order)
+inline uint16_t invertByteorder16(uint8_t address, uint16_t rawValue) {return __builtin_bswap16(rawValue);}
+inline uint32_t invertByteorder24(uint8_t address, uint32_t rawValue) {return __builtin_bswap32(rawValue) >> 8;}
+inline uint32_t invertByteorder32(uint8_t address, uint32_t rawValue) {return __builtin_bswap32(rawValue);}
+
+typedef uint8_t (*Postprocessor8Bit)(uint8_t, uint8_t);
+typedef uint16_t (*Postprocessor16Bit)(uint8_t, uint16_t);
+typedef uint32_t (*Postprocessor24Bit)(uint8_t, uint32_t);
+typedef uint32_t (*Postprocessor32Bit)(uint8_t, uint32_t);
+
 #define _DEFINE_READ_WRITE_ADDRESS_MEMBERS(name, raddr, waddr)\
 static constexpr uint8_t name##ReadAddress = (raddr);\
 static constexpr uint8_t name##WriteAddress = (waddr);\
