@@ -42,12 +42,6 @@ constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>:
     return static_cast<typename std::underlying_type<T>::type>(lhs) + rhs;
 }
 
-
-
-#define _BYTESWAP16(v) (__builtin_bswap16((v)))
-#define _BYTESWAP24(v) (__builtin_bswap32((v)) >> 8)
-#define _BYTESWAP32(v) (__builtin_bswap32((v)))
-
 #define _DEFINE_READ_WRITE_ADDRESS_MEMBERS(name, raddr, waddr)\
 static constexpr uint8_t name##ReadAddress = (raddr);\
 static constexpr uint8_t name##WriteAddress = (waddr);\
@@ -60,58 +54,58 @@ static constexpr uint8_t name##WriteAddress = (waddr);\
 #define QUICKSPI_DEFINE_REGISTER8_RW(name, raddr, waddr)\
 enum class name : uint8_t;\
 _DEFINE_READ_WRITE_ADDRESS_MEMBERS(name, raddr, waddr)\
-inline uint8_t read##name() {return read8BitRegister((raddr));}\
-inline void write##name(uint8_t val) {return write8BitRegister((waddr), val);}\
-inline void write##name(name val) {return write8BitRegister((waddr), static_cast<uint8_t>(val));}\
-inline bool writeAndVerify##name(uint8_t val) {return writeAndVerify8BitRegister((raddr), (waddr), val);}\
+inline uint8_t read##name() {return postprocessRead8((raddr), read8BitRegister((raddr)));}\
+inline void write##name(uint8_t val) {write8BitRegister((waddr), postprocessWrite8((waddr), val));}\
+inline void write##name(name val) {write8BitRegister((waddr), postprocessWrite8((waddr), static_cast<uint8_t>(val)));}\
+inline bool writeAndVerify##name(uint8_t val) {return writeAndVerify8BitRegister((raddr), (waddr), postprocessWrite8((waddr), val));}\
 enum class name : uint8_t
 
 #define QUICKSPI_DEFINE_REGISTER16_RW(name, raddr, waddr)\
 enum class name : uint16_t;\
 _DEFINE_READ_WRITE_ADDRESS_MEMBERS(name, raddr, waddr)\
-inline uint16_t read##name() {uint16_t _data = read16BitRegister((raddr)); return invertReadByteOrder ? _BYTESWAP16(_data) : _data;}\
-inline void write##name(uint16_t val) {return write16BitRegister((waddr), val);}\
-inline void write##name(name val) {return write16BitRegister((waddr), static_cast<uint16_t>(val));}\
-inline bool writeAndVerify##name(uint16_t val) {return writeAndVerify16BitRegister((raddr), (waddr), val);}\
+inline uint16_t read##name() {return postprocessRead16((raddr), read16BitRegister((raddr)));}\
+inline void write##name(uint16_t val) {write16BitRegister((waddr), postprocessWrite16((waddr), val));}\
+inline void write##name(name val) {write16BitRegister((waddr), postprocessWrite16((waddr), static_cast<uint16_t>(val)));}\
+inline bool writeAndVerify##name(uint16_t val) {return writeAndVerify16BitRegister((raddr), (waddr), postprocessWrite16((waddr), val));}\
 enum class name : uint16_t
 
 #define QUICKSPI_DEFINE_REGISTER24_RW(name, raddr, waddr)\
 enum class name : uint32_t;\
 _DEFINE_READ_WRITE_ADDRESS_MEMBERS(name, raddr, waddr)\
-inline uint32_t read##name() {uint32_t _data = read24BitRegister((raddr)); return invertReadByteOrder ? _BYTESWAP24(_data) : _data;}\
-inline void write##name(uint32_t val) {return write24BitRegister((waddr), val);}\
-inline void write##name(name val) {return write16BitRegister((waddr), static_cast<uint32_t>(val));}\
-inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify24BitRegister((raddr), (waddr), val);}\
+inline uint32_t read##name() {return postprocessRead24((raddr), read24BitRegister((raddr)));}\
+inline void write##name(uint32_t val) {return write24BitRegister((waddr), postprocessWrite24((waddr), val));}\
+inline void write##name(name val) {return write16BitRegister((waddr), postprocessWrite24((waddr), static_cast<uint32_t>( val)));}\
+inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify24BitRegister((raddr), (waddr), postprocessWrite24((waddr), val));}\
 enum class name : uint32_t
 
 #define QUICKSPI_DEFINE_REGISTER32_RW(name, raddr, waddr)\
 enum class name : uint32_t;\
 _DEFINE_READ_WRITE_ADDRESS_MEMBERS(name, raddr, waddr)\
-inline uint32_t read##name() {return read32BitRegister((raddr));}\
-inline void write##name(uint32_t val) {return write32BitRegister((waddr), val);}\
-inline void write##name(name val) {return write16BitRegister((waddr), static_cast<uint32_t>(val));}\
-inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify32BitRegister((raddr), (waddr), val);}\
+inline uint32_t read##name() {return postprocessRead32((raddr), read32BitRegister((raddr)));}\
+inline void write##name(uint32_t val) {return write32BitRegister((waddr), postprocessWrite32((waddr), val));}\
+inline void write##name(name val) {return write16BitRegister((waddr), postprocessWrite32((waddr), static_cast<uint32_t>(val)));}\
+inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify32BitRegister((raddr), (waddr), postprocessWrite32((waddr), val));}\
 enum class name : uint32_t
 
 // Read-only register definitions
 #define QUICKSPI_DEFINE_REGISTER8_RO(name, addr)\
 static constexpr uint8_t name = addr;\
-inline uint8_t read##name() {return read8BitRegister((addr));}\
+inline uint8_t read##name() {return postprocessRead8((addr), read8BitRegister((addr)));}\
 enum class name : uint8_t
 
 #define QUICKSPI_DEFINE_REGISTER16_RO(name, addr)\
 static constexpr uint8_t name = addr;\
-inline uint16_t read##name() {uint16_t _data = read16BitRegister((addr)); return invertReadByteOrder ? _BYTESWAP16(_data) : _data;}\
+inline uint16_t read##name() {return postprocessRead16((addr), read16BitRegister((addr)));}\
 enum class name : uint16_t
 
 #define QUICKSPI_DEFINE_REGISTER24_RO(name, addr)\
 static constexpr uint8_t name = addr;\
-inline uint32_t read##name() {uint16_t _data = read24BitRegister((addr)); return invertReadByteOrder ? _BYTESWAP24(_data) : _data;}\
+inline uint32_t read##name() {return postprocessRead24((addr), read24BitRegister((addr)));}\
 enum class name : uint32_t
 
 #define QUICKSPI_DEFINE_REGISTER32_RO(name, addr)\
 static constexpr uint8_t name = addr;\
-inline uint32_t read##name() {uint16_t _data = read24BitRegister((addr)); return invertReadByteOrder ? _BYTESWAP24(_data) : _data;}\
+inline uint32_t read##name() {return postprocessRead32((addr), read32BitRegister((addr)));}\
 enum class name : uint32_t
 
 /**
@@ -161,6 +155,9 @@ public:
     void writeData(uint8_t registerAddress, const uint8_t* buf, size_t len);
 
     /**
+     * @brief Writes data to a register and verifies if the data has been written correctly by reading back the register
+     * and comparing with the original value.
+     * 
      * @return true if the value which has been read back matches the value written into the device
      * @return false if the value written mismatches the value read back from the register
      */
