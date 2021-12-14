@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <SPI.h>
 
+#include <type_traits>
 
 /**
  * @brief Define ORing of two enum classes (register definitions)
@@ -25,13 +26,27 @@ constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>:
 {
     return static_cast<typename std::underlying_type<T>::type>(lhs) | rhs;
 }
-// Reversed order
+// Reversed argument order
 template<class T, class I>
 constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>::value, I>::type operator|(I lhs, T rhs)
 {
     return lhs | static_cast<typename std::underlying_type<T>::type>(rhs);
 }
 
+/**
+ * @brief Define ORing of an enum class and an integer
+ */
+template<class T, class I>
+constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>::value, I>::type operator&(T lhs, I rhs) 
+{
+    return static_cast<typename std::underlying_type<T>::type>(lhs) & rhs;
+}
+// Reversed argument order
+template<class T, class I>
+constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>::value, I>::type operator&(I lhs, T rhs)
+{
+    return lhs & static_cast<typename std::underlying_type<T>::type>(rhs);
+}
 
 /**
  * @brief Define adding of enum classes (register definitions) and numbers
