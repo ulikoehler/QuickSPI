@@ -56,6 +56,12 @@ constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>:
 {
     return static_cast<typename std::underlying_type<T>::type>(lhs) + rhs;
 }
+// Reversed argument order
+template<class T, class I>
+constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>::value, I>::type operator+(I lhs, T rhs) 
+{
+    return lhs + static_cast<typename std::underlying_type<T>::type>(rhs);
+}
 
 #define _DEFINE_READ_WRITE_ADDRESS_MEMBERS(name, raddr, waddr)\
 static constexpr uint8_t name##ReadAddress = (raddr);\
