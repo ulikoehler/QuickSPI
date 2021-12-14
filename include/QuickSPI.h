@@ -95,7 +95,7 @@ enum class name : uint32_t;\
 _DEFINE_READ_WRITE_ADDRESS_MEMBERS(name, raddr, waddr)\
 inline uint32_t read##name() {return postprocessRead24((raddr), read24BitRegister((raddr)));}\
 inline void write##name(uint32_t val) {return write24BitRegister((waddr), postprocessWrite24((waddr), val));}\
-inline void write##name(name val) {return write16BitRegister((waddr), postprocessWrite24((waddr), static_cast<uint32_t>( val)));}\
+inline void write##name(name val) {return write24BitRegister((waddr), postprocessWrite24((waddr), static_cast<uint32_t>(val)));}\
 inline bool writeAndVerify##name(uint32_t val) {return writeAndVerify24BitRegister((raddr), (waddr), postprocessWrite24((waddr), val));}\
 enum class name : uint32_t
 
