@@ -77,7 +77,7 @@ void QuickSPIDevice::readData(uint8_t registerAddress, uint8_t* buf, size_t len)
     spi.endTransaction();
 
     #ifdef QUICKSPI_DEBUG_READS
-    Serial.printf("QuickSPI read of size 1+%d\r\n", len);
+    Serial.printf("QuickSPI read of size 1+%d 0f register %02x\r\n", len, registerAddress);
     for (size_t i = 0; i < len+1; i++)
     {
         Serial.printf(" -- RX byte %d: %02x\r\n", i, trxbuf[i]);
