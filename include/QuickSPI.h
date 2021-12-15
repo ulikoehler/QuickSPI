@@ -157,22 +157,22 @@ enum class name : uint32_t
 
 // Read-only register definitions
 #define QUICKSPI_DEFINE_REGISTER8_RO(name, addr)\
-static constexpr uint8_t name = addr;\
+static constexpr uint8_t name##Address = addr;\
 inline uint8_t read##name() {return postprocessRead8((addr), read8BitRegister((addr)));}\
 enum class name : uint8_t
 
 #define QUICKSPI_DEFINE_REGISTER16_RO(name, addr)\
-static constexpr uint8_t name = addr;\
+static constexpr uint8_t name##Address = addr;\
 inline uint16_t read##name() {return postprocessRead16((addr), read16BitRegister((addr)));}\
 enum class name : uint16_t
 
 #define QUICKSPI_DEFINE_REGISTER24_RO(name, addr)\
-static constexpr uint8_t name = addr;\
+static constexpr uint8_t name##Address = addr;\
 inline uint32_t read##name() {return postprocessRead24((addr), read24BitRegister((addr)));}\
 enum class name : uint32_t
 
 #define QUICKSPI_DEFINE_REGISTER32_RO(name, addr)\
-static constexpr uint8_t name = addr;\
+static constexpr uint8_t name##Address = addr;\
 inline uint32_t read##name() {return postprocessRead32((addr), read32BitRegister((addr)));}\
 enum class name : uint32_t
 
