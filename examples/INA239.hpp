@@ -39,8 +39,6 @@ public:
         );
     }
 
-    //constexpr static float CurrentResolution = 305.1758e-6;
-
     void Configure() {
         // Current resolution ("Current_LSB") == 305.1758uA, same as reference design of section 8.2.2.3 in the datasheet
         // --> SHUNT_CAL = 819.2e6 * 305.1758e-6 * 16e-3 = 4000.000
