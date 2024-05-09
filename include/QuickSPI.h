@@ -7,6 +7,9 @@
 
 #include <type_traits>
 
+#if !defined(QUICKSPI_NO_ENUM_OPERATIONS) && !defined(QUICKI2C_ENUM_OPERATIONS)
+#define QUICKSPI_ENUM_OPERATIONS
+
 /**
  * @brief Define ORing of two enum classes (register definitions)
  */
@@ -92,8 +95,9 @@ template<class T, class I>
 constexpr typename std::enable_if<std::is_enum<T>::value && std::is_integral<I>::value, I>::type operator*(I lhs, T rhs) 
 {
     return lhs * static_cast<typename std::underlying_type<T>::type>(rhs);
-
 }
+
+#endif
 
 // Pre/postprocess functions that do nothing
 inline uint8_t noop(uint8_t address, uint8_t rawValue) {return rawValue;}
