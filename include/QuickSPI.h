@@ -1,10 +1,23 @@
 #pragma once
 
+// Driver selection - default to Arduino unless ESP-IDF is explicitly requested
+#if !defined(QUICKSPI_DRIVER_ARDUINO) && !defined(QUICKSPI_DRIVER_ESPIDF)
+#define QUICKSPI_DRIVER_ARDUINO
+#endif
+
+#ifdef QUICKSPI_DRIVER_ARDUINO
 #include <Arduino.h>
+#include <SPI.h>
+#elif defined(QUICKSPI_DRIVER_ESPIDF)
+#include <driver/spi_master.h>
+#include <driver/gpio.h>
+#include <esp_log.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
-#include <SPI.h>
-
 #include <type_traits>
 
 #if !defined(QUICKSPI_NO_ENUM_OPERATIONS) && !defined(QUICKI2C_ENUM_OPERATIONS)
@@ -203,7 +216,11 @@ enum class name : uint32_t
  */
 class QuickSPIDevice {
 public:
+#ifdef QUICKSPI_DRIVER_ARDUINO
     QuickSPIDevice(SPIClass& spi, uint8_t ssPin, SPISettings spiSettings);
+#elif defined(QUICKSPI_DRIVER_ESPIDF)
+    QuickSPIDevice(spi_host_device_t host, gpio_num_t cs_pin, uint32_t clock_speed_hz, uint8_t mode = 0);
+#endif
 
     // Define a member in your class:
     // constexpr static bool invertReadByteOrder = false;
@@ -251,7 +268,12 @@ public:
     uint32_t delayBetweenWriteAndRead = 1;
 
 protected:
+#ifdef QUICKSPI_DRIVER_ARDUINO
     SPIClass& spi;
     uint8_t ssPin;
     SPISettings spiSettings;
+#elif defined(QUICKSPI_DRIVER_ESPIDF)
+    spi_device_handle_t spi_device;
+    gpio_num_t cs_pin;
+#endif
 };
