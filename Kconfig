@@ -1,0 +1,19 @@
+menu "QuickSPI Configuration"
+
+choice
+    prompt "Select QuickSPI driver"
+    default QUICKSPI_DRIVER_ESPIDF
+
+config QUICKSPI_DRIVER_ESPIDF
+    bool "ESP-IDF SPI driver"
+    help
+        Use ESP-IDF SPI driver.
+
+config QUICKSPI_DRIVER_ARDUINO
+    bool "Arduino SPI driver"
+    help
+        Use Arduino SPI driver.
+
+endchoice
+
+endmenu
