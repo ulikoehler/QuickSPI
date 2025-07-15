@@ -1,8 +1,13 @@
 #pragma once
 
-// Driver selection - default to Arduino unless ESP-IDF is explicitly requested
+
+// Automatic driver selection - use Arduino only if Arduino is detected, else use ESP-IDF
 #if !defined(QUICKSPI_DRIVER_ARDUINO) && !defined(QUICKSPI_DRIVER_ESPIDF)
+#if defined(ARDUINO) || defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_SAMD)
 #define QUICKSPI_DRIVER_ARDUINO
+#else
+#define QUICKSPI_DRIVER_ESPIDF
+#endif
 #endif
 
 #ifdef QUICKSPI_DRIVER_ARDUINO
