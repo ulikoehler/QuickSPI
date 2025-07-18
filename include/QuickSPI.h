@@ -225,6 +225,7 @@ public:
     QuickSPIDevice(SPIClass& spi, uint8_t ssPin, SPISettings spiSettings);
 #elif defined(QUICKSPI_DRIVER_ESPIDF)
     QuickSPIDevice(spi_host_device_t host, gpio_num_t cs_pin, uint32_t clock_speed_hz, uint8_t mode = 0);
+    QuickSPIDevice(spi_host_device_t host, spi_device_interface_config_t* device);
 #endif
 
     // Define a member in your class:
@@ -292,6 +293,5 @@ protected:
     SPISettings spiSettings;
 #elif defined(QUICKSPI_DRIVER_ESPIDF)
     spi_device_handle_t spi_device;
-    gpio_num_t cs_pin;
 #endif
 };

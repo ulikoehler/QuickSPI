@@ -4,16 +4,20 @@
 #ifdef QUICKSPI_DRIVER_ARDUINO
 QuickSPIDevice::QuickSPIDevice(SPIClass& spi, uint8_t ssPin, SPISettings spiSettings): spi(spi), ssPin(ssPin), spiSettings(spiSettings) {}
 #elif defined(QUICKSPI_DRIVER_ESPIDF)
-QuickSPIDevice::QuickSPIDevice(spi_host_device_t host, gpio_num_t cs_pin, uint32_t clock_speed_hz, uint8_t mode) : cs_pin(cs_pin) {
-    spi_device_interface_config_t dev_config = {};
+QuickSPIDevice::QuickSPIDevice(spi_host_device_t host, gpio_num_t cs_pin, uint32_t clock_speed_hz, uint8_t mode) {
+    spi_device_interface_config_t dev_config = { 0 };
     dev_config.clock_speed_hz = clock_speed_hz;
     dev_config.mode = mode;
     dev_config.spics_io_num = cs_pin;
     dev_config.queue_size = 1;
-    dev_config.flags = 0;
     
     ESP_ERROR_CHECK(spi_bus_add_device(host, &dev_config, &spi_device));
 }
+
+QuickSPIDevice::QuickSPIDevice(spi_host_device_t host, spi_device_interface_config_t* device) {
+    ESP_ERROR_CHECK(spi_bus_add_device(host, device, &spi_device));
+}
+
 #endif
 
 void QuickSPIDevice::writeRegister(uint8_t registerAddress, const uint8_t* buf, size_t len) {
@@ -69,7 +73,6 @@ void QuickSPIDevice::writeRawData(const uint8_t* txbuf, size_t len) {
 }
 
 void QuickSPIDevice::writeReadRawData(uint8_t* trxbuf, size_t txlen, size_t rxlen) {
-    size_t maxlen = (txlen > rxlen) ? txlen : rxlen;
     
     #if defined(QUICKSPI_DEBUG_WRITES) || defined(QUICKSPI_DEBUG_READS)
     Serial.printf("QuickSPI raw write/read of tx size %d, rx size %d\r\n", txlen, rxlen);
@@ -81,6 +84,7 @@ void QuickSPIDevice::writeReadRawData(uint8_t* trxbuf, size_t txlen, size_t rxle
     
     // SPI transaction
 #ifdef QUICKSPI_DRIVER_ARDUINO
+    size_t maxlen = (txlen > rxlen) ? txlen : rxlen;
     spi.beginTransaction(spiSettings);
     digitalWrite(ssPin, LOW);
     spi.transfer(trxbuf, maxlen);
@@ -88,7 +92,7 @@ void QuickSPIDevice::writeReadRawData(uint8_t* trxbuf, size_t txlen, size_t rxle
     spi.endTransaction();
 #elif defined(QUICKSPI_DRIVER_ESPIDF)
     spi_transaction_t trans = {};
-    trans.length = maxlen * 8; // length in bits
+    trans.length = (txlen + rxlen) * 8; // length in bits
     trans.tx_buffer = trxbuf;
     trans.rx_buffer = trxbuf;
     ESP_ERROR_CHECK(spi_device_transmit(spi_device, &trans));
