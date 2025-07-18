@@ -102,7 +102,7 @@ void QuickSPIDevice::writeReadRawData(uint8_t* trxbuf, size_t txlen, size_t rxle
     #endif
 }
 
-void QuickSPIDevice::writeAndReceiveData(uint8_t registerAddress, uint8_t* buf, size_t len) {
+void QuickSPIDevice::writeAndReceiveRegister(uint8_t registerAddress, uint8_t* buf, size_t len) {
     // Prepare buffer with register address + data
     uint8_t* trxbuf = new uint8_t[len + 1];
     trxbuf[0] = registerAddress;
