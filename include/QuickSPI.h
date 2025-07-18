@@ -247,7 +247,7 @@ public:
      * NOTE: This will discard data received while transmitting the address byte,
      * storing overall [len] bytes in buf
      */
-    virtual void writeAndReceiveRegister(uint8_t registerAddress, uint8_t* buf, size_t len);
+    virtual void writeAndReadRegister(uint8_t registerAddress, uint8_t* buf, size_t len);
     /**
      * Write data, discarding the received data
      */
