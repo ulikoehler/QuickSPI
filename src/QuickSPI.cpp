@@ -16,118 +16,134 @@ QuickSPIDevice::QuickSPIDevice(spi_host_device_t host, gpio_num_t cs_pin, uint32
 }
 #endif
 
-void QuickSPIDevice::writeData(uint8_t registerAddress, const uint8_t* buf, size_t len) {
-    // Transmit & receive buffer.
-    // Length + 1 since we need to 
-    // NOTE: Received data will
-    uint8_t* trxbuf = new uint8_t[len + 1];
-    trxbuf[0] = registerAddress;
-    // Copy source data
-    memcpy(trxbuf + 1, buf, len);
-    // Debug?
+void QuickSPIDevice::writeRegister(uint8_t registerAddress, const uint8_t* buf, size_t len) {
+    // Prepare buffer with register address + data
+    uint8_t* txbuf = new uint8_t[len + 1];
+    txbuf[0] = registerAddress;
+    memcpy(txbuf + 1, buf, len);
+    
     #ifdef QUICKSPI_DEBUG_WRITES
-    Serial.printf("QuickSPI write of size 1+%d of register %02x\r\n", len, register);
-    for (size_t i = 0; i < len+1; i++)
+    Serial.printf("QuickSPI write of size 1+%d of register %02x\r\n", len, registerAddress);
+    #endif
+    
+    // Use raw data method
+    writeRawData(txbuf, len + 1);
+    
+    // Cleanup
+    delete[] txbuf;
+}
+
+void QuickSPIDevice::writeRawData(const uint8_t* txbuf, size_t len) {
+    
+    #ifdef QUICKSPI_DEBUG_WRITES
+    Serial.printf("QuickSPI raw write of size %d\r\n", len);
+    for (size_t i = 0; i < len; i++)
     {
-        Serial.printf(" -- IO byte %d: %02x\r\n", i, trxbuf[i]);
+        Serial.printf(" -- TX byte %d: %02x\r\n", i, trxbuf[i]);
     }
     #endif
+    
+    // SPI transaction
+#ifdef QUICKSPI_DRIVER_ARDUINO
+    // Allocate buffer for transmission
+    uint8_t* trxbuf = new uint8_t[len];
+    // Copy source data
+    memcpy(trxbuf, txbuf, len);
+
+    spi.beginTransaction(spiSettings);
+    digitalWrite(ssPin, LOW);
+    spi.transfer(trxbuf, len);
+    digitalWrite(ssPin, HIGH);
+    spi.endTransaction();
+
+    // Cleanup
+    delete[] trxbuf;
+#elif defined(QUICKSPI_DRIVER_ESPIDF)
+    // Transfer directly using txbuf
+    spi_transaction_t trans = {};
+    trans.length = len * 8; // length in bits
+    trans.tx_buffer = txbuf;
+    ESP_ERROR_CHECK(spi_device_transmit(spi_device, &trans));
+#endif
+    
+}
+
+void QuickSPIDevice::writeReadRawData(uint8_t* trxbuf, size_t txlen, size_t rxlen) {
+    size_t maxlen = (txlen > rxlen) ? txlen : rxlen;
+    
+    #if defined(QUICKSPI_DEBUG_WRITES) || defined(QUICKSPI_DEBUG_READS)
+    Serial.printf("QuickSPI raw write/read of tx size %d, rx size %d\r\n", txlen, rxlen);
+    for (size_t i = 0; i < txlen; i++)
+    {
+        Serial.printf(" -- TX byte %d: %02x\r\n", i, trxbuf[i]);
+    }
+    #endif
+    
     // SPI transaction
 #ifdef QUICKSPI_DRIVER_ARDUINO
     spi.beginTransaction(spiSettings);
     digitalWrite(ssPin, LOW);
-    spi.transfer(trxbuf, len + 1);
+    spi.transfer(trxbuf, maxlen);
     digitalWrite(ssPin, HIGH);
     spi.endTransaction();
 #elif defined(QUICKSPI_DRIVER_ESPIDF)
     spi_transaction_t trans = {};
-    trans.length = (len + 1) * 8; // length in bits
+    trans.length = maxlen * 8; // length in bits
     trans.tx_buffer = trxbuf;
+    trans.rx_buffer = trxbuf;
     ESP_ERROR_CHECK(spi_device_transmit(spi_device, &trans));
 #endif
-    // Cleanup. Discards received data
-    delete[] trxbuf;
+
+    #if defined(QUICKSPI_DEBUG_WRITES) || defined(QUICKSPI_DEBUG_READS)
+    for (size_t i = 0; i < rxlen; i++)
+    {
+        Serial.printf(" -- RX byte %d: %02x\r\n", i, trxbuf[i]);
+    }
+    #endif
 }
 
 void QuickSPIDevice::writeAndReceiveData(uint8_t registerAddress, uint8_t* buf, size_t len) {
-    // Transmit & receive buffer.
-    // Length + 1 since we need to 
-    // NOTE: Received data will
+    // Prepare buffer with register address + data
     uint8_t* trxbuf = new uint8_t[len + 1];
     trxbuf[0] = registerAddress;
-    // Copy source data
     memcpy(trxbuf + 1, buf, len);
+    
     #if defined(QUICKSPI_DEBUG_WRITES) || defined(QUICKSPI_DEBUG_READS)
     Serial.printf("QuickSPI read/write of size 1+%d of register %02x\r\n", len, registerAddress);
-    for (size_t i = 0; i < len+1; i++)
-    {
-        Serial.printf(" -- Write byte %d: %02x\r\n", i, trxbuf[i]);
-    }
     #endif
-    // SPI transaction
-#ifdef QUICKSPI_DRIVER_ARDUINO
-    spi.beginTransaction(spiSettings);
-    digitalWrite(ssPin, LOW);
-    spi.transfer(trxbuf, len + 1);
-    digitalWrite(ssPin, HIGH);
-    spi.endTransaction();
-#elif defined(QUICKSPI_DRIVER_ESPIDF)
-    spi_transaction_t trans = {};
-    trans.length = (len + 1) * 8; // length in bits
-    trans.tx_buffer = trxbuf;
-    trans.rx_buffer = trxbuf;
-    ESP_ERROR_CHECK(spi_device_transmit(spi_device, &trans));
-#endif
-    // Copy received data
+    
+    // Use raw data method
+    writeReadRawData(trxbuf, len + 1, len + 1);
+    
+    // Copy received data (skip first byte which is the register address response)
     memcpy(buf, trxbuf + 1, len);
-
-    #if defined(QUICKSPI_DEBUG_WRITES) || defined(QUICKSPI_DEBUG_READS)
-    for (size_t i = 0; i < len+1; i++)
-    {
-        Serial.printf(" -- RX byte %d: %02x\r\n", i, trxbuf[i]);
-    }
-    #endif
-    // Cleanup.
+    
+    // Cleanup
     delete[] trxbuf;
 }
 
-void QuickSPIDevice::readData(uint8_t registerAddress, uint8_t* buf, size_t len) {
-    // Transmit & receive buffer.
-    // Length + 1 since we need to 
-    // NOTE: Received data will
+void QuickSPIDevice::readRegister(uint8_t registerAddress, uint8_t* buf, size_t len) {
+    // Prepare buffer with register address
     uint8_t* trxbuf = new uint8_t[len + 1];
     trxbuf[0] = registerAddress;
-    // SPI transaction
-#ifdef QUICKSPI_DRIVER_ARDUINO
-    spi.beginTransaction(spiSettings);
-    digitalWrite(ssPin, LOW);
-    spi.transfer(trxbuf, len + 1);
-    digitalWrite(ssPin, HIGH);
-    spi.endTransaction();
-#elif defined(QUICKSPI_DRIVER_ESPIDF)
-    spi_transaction_t trans = {};
-    trans.length = (len + 1) * 8; // length in bits
-    trans.tx_buffer = trxbuf;
-    trans.rx_buffer = trxbuf;
-    ESP_ERROR_CHECK(spi_device_transmit(spi_device, &trans));
-#endif
-
+    
     #ifdef QUICKSPI_DEBUG_READS
-    Serial.printf("QuickSPI read of size 1+%d 0f register %02x\r\n", len, registerAddress);
-    for (size_t i = 0; i < len+1; i++)
-    {
-        Serial.printf(" -- RX byte %d: %02x\r\n", i, trxbuf[i]);
-    }
+    Serial.printf("QuickSPI read of size 1+%d of register %02x\r\n", len, registerAddress);
     #endif
-    // Copy to destination buffer
+    
+    // Use raw data method (send 1 byte, receive len+1 bytes)
+    writeReadRawData(trxbuf, 1, len + 1);
+    
+    // Copy received data (skip first byte which is the register address response)
     memcpy(buf, trxbuf + 1, len);
+    
     // Cleanup
     delete[] trxbuf;
 }
 
 bool QuickSPIDevice::writeAndVerifyData(uint8_t readAddress, uint8_t writeAddress, const uint8_t* buf, size_t len) {
     // Try to write - if it fails, do not try to verify
-    writeData(writeAddress, buf, len);
+    writeRegister(writeAddress, buf, len);
     // Insert grace time between write and read
 #ifdef QUICKSPI_DRIVER_ARDUINO
     delay(delayBetweenWriteAndRead);
@@ -136,7 +152,7 @@ bool QuickSPIDevice::writeAndVerifyData(uint8_t readAddress, uint8_t writeAddres
 #endif
     // Read back data for verify
     uint8_t* rxbuf = new uint8_t[len];
-    readData(readAddress, rxbuf, len);
+    readRegister(readAddress, rxbuf, len);
     // Compare data
     bool result = memcmp(rxbuf, buf, len) == 0; // true => rx data is the same as tx data
     // cleanup
@@ -146,42 +162,42 @@ bool QuickSPIDevice::writeAndVerifyData(uint8_t readAddress, uint8_t writeAddres
 
 uint8_t QuickSPIDevice::read8BitRegister(uint8_t registerAddress) {
     uint8_t ret = 0;
-    readData(registerAddress, (uint8_t*)&ret, 1);
+    readRegister(registerAddress, (uint8_t*)&ret, 1);
     return ret;
 }
 
 uint16_t QuickSPIDevice::read16BitRegister(uint8_t registerAddress) {
     uint16_t ret = 0;
-    readData(registerAddress, (uint8_t*)&ret, 2);
+    readRegister(registerAddress, (uint8_t*)&ret, 2);
     return ret;
 }
 
 uint32_t QuickSPIDevice::read24BitRegister(uint8_t registerAddress) {
     uint32_t ret = 0;
-    readData(registerAddress, (uint8_t*)&ret, 3);
+    readRegister(registerAddress, (uint8_t*)&ret, 3);
     return ret;
 }
 
 uint32_t QuickSPIDevice::read32BitRegister(uint8_t registerAddress) {
     uint32_t ret = 0;
-    readData(registerAddress, (uint8_t*)&ret, 4);
+    readRegister(registerAddress, (uint8_t*)&ret, 4);
     return ret;
 }
 
 void QuickSPIDevice::write8BitRegister(uint8_t registerAddress, uint8_t value) {
-    return writeData(registerAddress, (uint8_t*)&value, 1);
+    return writeRegister(registerAddress, (uint8_t*)&value, 1);
 }
 
 void QuickSPIDevice::write16BitRegister(uint8_t registerAddress, uint16_t value) {
-    return writeData(registerAddress, (uint8_t*)&value, 2);
+    return writeRegister(registerAddress, (uint8_t*)&value, 2);
 }
 
 void QuickSPIDevice::write24BitRegister(uint8_t registerAddress, uint32_t value) {
-    return writeData(registerAddress, (uint8_t*)&value, 3);
+    return writeRegister(registerAddress, (uint8_t*)&value, 3);
 }
 
 void QuickSPIDevice::write32BitRegister(uint8_t registerAddress, uint32_t value) {
-    return writeData(registerAddress, (uint8_t*)&value, 4);
+    return writeRegister(registerAddress, (uint8_t*)&value, 4);
 }
 
 bool QuickSPIDevice::writeAndVerify8BitRegister(uint8_t readAddress, uint8_t writeAddress, uint8_t value) {

@@ -231,27 +231,40 @@ public:
     // constexpr static bool invertReadByteOrder = false;
     // constexpr static bool invertWriteByteOrder = false;
 
-    uint8_t read8BitRegister(uint8_t registerAddress);
-    uint16_t read16BitRegister(uint8_t registerAddress);
-    uint32_t read24BitRegister(uint8_t registerAddress);
-    uint32_t read32BitRegister(uint8_t registerAddress);
-    void readData(uint8_t registerAddress, uint8_t* buf, size_t len);
+    virtual uint8_t read8BitRegister(uint8_t registerAddress);
+    virtual uint16_t read16BitRegister(uint8_t registerAddress);
+    virtual uint32_t read24BitRegister(uint8_t registerAddress);
+    virtual uint32_t read32BitRegister(uint8_t registerAddress);
+    virtual void readRegister(uint8_t registerAddress, uint8_t* buf, size_t len);
 
-    void write8BitRegister(uint8_t registerAddress, uint8_t value);
-    void write16BitRegister(uint8_t registerAddress, uint16_t value);
-    void write24BitRegister(uint8_t registerAddress, uint32_t value);
-    void write32BitRegister(uint8_t registerAddress, uint32_t value);
+    virtual void write8BitRegister(uint8_t registerAddress, uint8_t value);
+    virtual void write16BitRegister(uint8_t registerAddress, uint16_t value);
+    virtual void write24BitRegister(uint8_t registerAddress, uint32_t value);
+    virtual void write32BitRegister(uint8_t registerAddress, uint32_t value);
 
     /**
      * Write data, storing the received data in the given buffer.
      * NOTE: This will discard data received while transmitting the address byte,
      * storing overall [len] bytes in buf
      */
-    void writeAndReceiveData(uint8_t registerAddress, uint8_t* buf, size_t len);
+    virtual void writeAndReceiveRegister(uint8_t registerAddress, uint8_t* buf, size_t len);
     /**
      * Write data, discarding the received data
      */
-    void writeData(uint8_t registerAddress, const uint8_t* buf, size_t len);
+    virtual void writeRegister(uint8_t registerAddress, const uint8_t* buf, size_t len);
+
+    /**
+     * Write raw data directly to SPI without register address
+     */
+    virtual void writeRawData(const uint8_t* txbuf, size_t len);
+
+    /**
+     * Write and read raw data directly to/from SPI without register address
+     * @param trxbuf Buffer containing data to transmit, will be overwritten with received data
+     * @param txlen Number of bytes to transmit
+     * @param rxlen Number of bytes to receive (buffer must be at least max(txlen, rxlen) bytes)
+     */
+    virtual void writeReadRawData(uint8_t* trxbuf, size_t txlen, size_t rxlen);
 
     /**
      * @brief Writes data to a register and verifies if the data has been written correctly by reading back the register
@@ -260,11 +273,11 @@ public:
      * @return true if the value which has been read back matches the value written into the device
      * @return false if the value written mismatches the value read back from the register
      */
-    bool writeAndVerify8BitRegister(uint8_t readAddress, uint8_t writeAddress, uint8_t value);
-    bool writeAndVerify16BitRegister(uint8_t readAddress, uint8_t writeAddress, uint16_t value);
-    bool writeAndVerify24BitRegister(uint8_t readAddress, uint8_t writeAddress, uint32_t value);
-    bool writeAndVerify32BitRegister(uint8_t readAddress, uint8_t writeAddress, uint32_t value);
-    bool writeAndVerifyData(uint8_t readAddress,uint8_t writeAddress, const uint8_t* buf, size_t len);
+    virtual bool writeAndVerify8BitRegister(uint8_t readAddress, uint8_t writeAddress, uint8_t value);
+    virtual bool writeAndVerify16BitRegister(uint8_t readAddress, uint8_t writeAddress, uint16_t value);
+    virtual bool writeAndVerify24BitRegister(uint8_t readAddress, uint8_t writeAddress, uint32_t value);
+    virtual bool writeAndVerify32BitRegister(uint8_t readAddress, uint8_t writeAddress, uint32_t value);
+    virtual bool writeAndVerifyData(uint8_t readAddress,uint8_t writeAddress, const uint8_t* buf, size_t len);
 
     /**
      * Milliseconds delay() between write and read during a writeAndVerifyData()
