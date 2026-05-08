@@ -2,6 +2,15 @@
 
 Practical Arduino SPI wrapper, allowing direct register access with proper error handling.
 
+## ESP-IDF Compatibility
+
+QuickSPI supports both ESP-IDF 5 and ESP-IDF 6 automatically.
+
+- On ESP-IDF 5, the component links against the classic `driver` component.
+- On ESP-IDF 6, the component auto-detects the split driver layout and adds `esp_driver_spi` and `esp_driver_gpio` as required dependencies.
+
+No user-side CMake changes are required for this version split.
+
 This is intended to be similar to [AdaFruit BusIO](https://github.com/adafruit/Adafruit_BusIO) but provide a more convenient API and less memory footprint. For example, every [Adafruit_BusIO_Register](https://github.com/adafruit/Adafruit_BusIO/blob/master/Adafruit_BusIO_Register.h) is an actual object occupying a bunch of bytes of RAM and does not provide verified read functionality.
 
 ## How?

@@ -5,8 +5,8 @@
 QuickSPIDevice::QuickSPIDevice(SPIClass& spi, uint8_t ssPin, SPISettings spiSettings): spi(spi), ssPin(ssPin), spiSettings(spiSettings) {}
 #elif defined(QUICKSPI_DRIVER_ESPIDF)
 QuickSPIDevice::QuickSPIDevice(spi_host_device_t host, gpio_num_t cs_pin, uint32_t clock_speed_hz, uint8_t mode) {
-    spi_device_interface_config_t dev_config = { 0 };
-    dev_config.clock_speed_hz = clock_speed_hz;
+    spi_device_interface_config_t dev_config = {};
+    dev_config.clock_speed_hz = static_cast<int>(clock_speed_hz);
     dev_config.mode = mode;
     dev_config.spics_io_num = cs_pin;
     dev_config.queue_size = 1;
