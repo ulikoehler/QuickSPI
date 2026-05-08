@@ -1,6 +1,6 @@
 {
     "name": "QuickSPI",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Practical Arduino Wire SPI wrapper, allowing direct register access with proper error handling.",
     "keywords": "SPI, Wire, Arduino",
     "repository":
