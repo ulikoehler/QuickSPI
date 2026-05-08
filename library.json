@@ -22,6 +22,6 @@
     "dependencies": {
       "SPI": "*"
     },
-    "frameworks": "arduino",
+    "frameworks": ["arduino", "espidf"],
     "platforms": "*"
 }
