@@ -23,6 +23,14 @@ QuickSPIDevice::QuickSPIDevice(spi_host_device_t host, spi_device_interface_conf
 void QuickSPIDevice::writeRegister(uint8_t registerAddress, const uint8_t* buf, size_t len) {
     // Prepare buffer with register address + data
     uint8_t* txbuf = new uint8_t[len + 1];
+    if (txbuf == nullptr) {
+#ifdef QUICKSPI_DRIVER_ESPIDF
+        ESP_LOGE("QuickSPI", "Failed to allocate buffer for writeRegister");
+#elif defined(QUICKSPI_DRIVER_ARDUINO)
+        Serial.println("QuickSPI: Failed to allocate buffer for writeRegister");
+#endif
+        return;
+    }
     txbuf[0] = registerAddress;
     memcpy(txbuf + 1, buf, len);
     
@@ -51,6 +59,10 @@ void QuickSPIDevice::writeRawData(const uint8_t* txbuf, size_t len) {
 #ifdef QUICKSPI_DRIVER_ARDUINO
     // Allocate buffer for transmission
     uint8_t* trxbuf = new uint8_t[len];
+    if (trxbuf == nullptr) {
+        Serial.println("QuickSPI: Failed to allocate buffer for writeRawData");
+        return;
+    }
     // Copy source data
     memcpy(trxbuf, txbuf, len);
 
@@ -109,6 +121,14 @@ void QuickSPIDevice::writeReadRawData(uint8_t* trxbuf, size_t txlen, size_t rxle
 void QuickSPIDevice::writeAndReadRegister(uint8_t registerAddress, uint8_t* buf, size_t len) {
     // Prepare buffer with register address + data
     uint8_t* trxbuf = new uint8_t[len + 1];
+    if (trxbuf == nullptr) {
+#ifdef QUICKSPI_DRIVER_ESPIDF
+        ESP_LOGE("QuickSPI", "Failed to allocate buffer for writeAndReadRegister");
+#elif defined(QUICKSPI_DRIVER_ARDUINO)
+        Serial.println("QuickSPI: Failed to allocate buffer for writeAndReadRegister");
+#endif
+        return;
+    }
     trxbuf[0] = registerAddress;
     memcpy(trxbuf + 1, buf, len);
     
@@ -129,6 +149,14 @@ void QuickSPIDevice::writeAndReadRegister(uint8_t registerAddress, uint8_t* buf,
 void QuickSPIDevice::readRegister(uint8_t registerAddress, uint8_t* buf, size_t len) {
     // Prepare buffer with register address
     uint8_t* trxbuf = new uint8_t[len + 1];
+    if (trxbuf == nullptr) {
+#ifdef QUICKSPI_DRIVER_ESPIDF
+        ESP_LOGE("QuickSPI", "Failed to allocate buffer for readRegister");
+#elif defined(QUICKSPI_DRIVER_ARDUINO)
+        Serial.println("QuickSPI: Failed to allocate buffer for readRegister");
+#endif
+        return;
+    }
     trxbuf[0] = registerAddress;
     
     #ifdef QUICKSPI_DEBUG_READS
@@ -156,6 +184,14 @@ bool QuickSPIDevice::writeAndVerifyData(uint8_t readAddress, uint8_t writeAddres
 #endif
     // Read back data for verify
     uint8_t* rxbuf = new uint8_t[len];
+    if (rxbuf == nullptr) {
+#ifdef QUICKSPI_DRIVER_ESPIDF
+        ESP_LOGE("QuickSPI", "Failed to allocate buffer for writeAndVerifyData");
+#elif defined(QUICKSPI_DRIVER_ARDUINO)
+        Serial.println("QuickSPI: Failed to allocate buffer for writeAndVerifyData");
+#endif
+        return false;
+    }
     readRegister(readAddress, rxbuf, len);
     // Compare data
     bool result = memcmp(rxbuf, buf, len) == 0; // true => rx data is the same as tx data
