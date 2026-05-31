@@ -1,5 +1,6 @@
 #include "QuickSPI.h"
 #include <string.h> // memcpy
+#include <algorithm> // std::max
 
 #ifdef QUICKSPI_DRIVER_ARDUINO
 QuickSPIDevice::QuickSPIDevice(SPIClass& spi, uint8_t ssPin, SPISettings spiSettings): spi(spi), ssPin(ssPin), spiSettings(spiSettings) {}
@@ -104,7 +105,7 @@ void QuickSPIDevice::writeReadRawData(uint8_t* trxbuf, size_t txlen, size_t rxle
     spi.endTransaction();
 #elif defined(QUICKSPI_DRIVER_ESPIDF)
     spi_transaction_t trans = {};
-    trans.length = (txlen + rxlen) * 8; // length in bits
+    trans.length = std::max(txlen, rxlen) * 8; // length in bits
     trans.tx_buffer = trxbuf;
     trans.rx_buffer = trxbuf;
     ESP_ERROR_CHECK(spi_device_transmit(spi_device, &trans));

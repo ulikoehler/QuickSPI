@@ -17,6 +17,10 @@ This is intended to be similar to [AdaFruit BusIO](https://github.com/adafruit/A
 
 QuickSPI provides classes & macro tricks to automatically define appropriate functions for any register, with zero memory footprint for additional registers.
 
+## Limitations
+
+QuickSPI currently does not support half-duplex SPI transactions. Only full-duplex transactions are supported.
+
 ## Arduino INA239 example
 
 This example initializes and reads some registers of the [INA239](https://www.ti.com/product/INA239) voltage & current sense amplifier
