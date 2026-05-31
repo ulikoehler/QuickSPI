@@ -21,6 +21,17 @@ QuickSPI provides classes & macro tricks to automatically define appropriate fun
 
 QuickSPI currently does not support half-duplex SPI transactions. Only full-duplex transactions are supported.
 
+## Configurable scratch buffer
+
+`QuickSPIDevice` is a class template with a per-instance static scratch buffer. You can optionally specify a custom buffer size per device:
+
+```cpp
+INA239<> ina(mySPI, nCS, settings);        // default buffer size
+INA239<32> ina(mySPI, nCS, settings);    // custom 32-byte buffer
+```
+
+The default size is controlled by `QUICKSPI_STATIC_BUFFER_SIZE` (Kconfig / compile definition). An optional memory canary (`0xCAFE`) at the end of the buffer detects overflow when enabled.
+
 ## Arduino INA239 example
 
 This example initializes and reads some registers of the [INA239](https://www.ti.com/product/INA239) voltage & current sense amplifier

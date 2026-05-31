@@ -14,7 +14,7 @@ template<
     Postprocessor24Bit postprocessWrite24=noop,
     Postprocessor32Bit postprocessWrite32=noop
 >
-class MAX11410ATI : public QuickSPIDevice {
+class MAX11410ATI : public QuickSPIDevice<> {
 public:
 
     inline MAX11410ATI(SPIClass& spi, uint8_t ssPin, SPISettings spiSettings): QuickSPIDevice(spi, ssPin, spiSettings) {

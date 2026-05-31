@@ -16,4 +16,27 @@ config QUICKSPI_DRIVER_ARDUINO
 
 endchoice
 
+config QUICKSPI_STATIC_BUFFER_SIZE
+    int "QuickSPI static scratch buffer size (bytes)"
+    default 16
+    range 1 256
+    help
+        Size of the per-device static scratch buffer used for SPI transactions.
+        If a transaction exceeds this size, behavior depends on the dynamic fallback setting.
+
+config QUICKSPI_ENABLE_DYNAMIC_FALLBACK
+    bool "Enable dynamic allocation fallback for oversized transactions"
+    default y
+    help
+        If enabled, transactions larger than the static buffer will fall back
+        to new[] allocation. If disabled, such transactions will be aborted with a log.
+
+config QUICKSPI_ENABLE_MEMORY_CANARY
+    bool "Enable memory canary (0xCAFE) for scratch buffer overflow detection"
+    default y
+    help
+        If enabled, a 16-bit canary (0xCAFE) is placed at the end of the scratch buffer.
+        It is written before every transaction and checked immediately after every transaction.
+        If the canary has been overwritten, a prominent error is logged.
+
 endmenu

@@ -13,7 +13,7 @@ template<
     Postprocessor24Bit postprocessWrite24=noop,
     Postprocessor32Bit postprocessWrite32=noop
 >
-class INA239 : public QuickSPIDevice {
+class INA239 : public QuickSPIDevice<> {
 public:
     inline INA239(SPIClass& spi, uint8_t ssPin, SPISettings spiSettings): QuickSPIDevice(spi, ssPin, spiSettings) {}
 
